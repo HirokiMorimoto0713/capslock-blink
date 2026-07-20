@@ -12,13 +12,20 @@ CONFIG="${CAPSLOCK_BLINK_CONFIG:-$HOME/.capslock-blink/config}"
 : "${FLAG_PATH:=~/.claude/blink-flag}"
 : "${STATE:=/tmp/claude-blink-state}"
 : "${INTERVAL:=1}"
+: "${DISMISS:=/tmp/claude-blink-dismiss}"
 
 CTL="/tmp/claude-blink-ssh-%r@%h:%p"
 SSH_OPTS=(-o ControlMaster=auto -o "ControlPath=$CTL" -o ControlPersist=300
           -o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=accept-new)
 
 while true; do
-    if ssh "${SSH_OPTS[@]}" "$MOTHERSHIP" "test -f $FLAG_PATH" 2>/dev/null; then
+    if [ -f "$DISMISS" ]; then
+        # CapsLock 2回押しによる手動解除。SSH の成否に関わらず点滅は止めたまま維持する
+        if ssh "${SSH_OPTS[@]}" "$MOTHERSHIP" "rm -f $FLAG_PATH" 2>/dev/null; then
+            rm -f "$DISMISS"
+        fi
+        echo off > "$STATE"
+    elif ssh "${SSH_OPTS[@]}" "$MOTHERSHIP" "test -f $FLAG_PATH" 2>/dev/null; then
         echo on > "$STATE"
     else
         echo off > "$STATE"

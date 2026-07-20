@@ -12,3 +12,6 @@ STATE="/tmp/claude-blink-state"
 
 # 母艦フラグを見に行く間隔（秒）。
 INTERVAL="1"
+
+# CapsLock 2回押しによる手動解除の合図ファイル（capsled と共有。通常このままでOK）。
+DISMISS="/tmp/claude-blink-dismiss"
