@@ -72,13 +72,15 @@ $EDITOR ~/.capslock-blink/config     # MOTHERSHIP="user@host" を自分の環境
 bash install-mac.sh
 ```
 
-インストールが終わって capsled が起動すると、macOS が「"capsled" がキーボード入力の監視を求めています」という**入力監視の許可ダイアログ**を出すので、許可してください。許可すると システム設定 → プライバシーとセキュリティ → 入力監視 に capsled が自動で登録されます（CLI バイナリは「＋」から手動追加しても登録されないことがあるため、capsled 自身が `IOHIDRequestAccess` で要求してダイアログを出させる方式にしています）。
+capsled は素の CLI バイナリではなく **最小の .app バンドル**（`~/.capslock-blink/capsled.app`）としてビルドされます。素のバイナリだと macOS の TCC が許可ダイアログを出しても入力監視リストへの登録に失敗することがあるためで、バンドルにすると確実に登録されます。
 
-ダイアログを見逃した・許可し損ねたときは:
+インストールが終わって capsled が起動すると、**「"capsled" で任意のアプリケーションからキー操作を受け取ろうとしています」** というダイアログが出ます。**「"システム設定"を開く」** を押し、入力監視リストに現れた `capsled` をオンにして、反映してください:
 
-1. システム設定 → 入力監視 に `capsled` が現れていればチェックをオン
-2. 反映: `launchctl kickstart -k gui/$(id -u)/dev.capslock-blink.led`
-   （kickstart するとダイアログがもう一度出ます）
+```bash
+launchctl kickstart -k gui/$(id -u)/dev.capslock-blink.led
+```
+
+ダイアログを見逃したときも、この kickstart でもう一度出せます。
 
 ## 動作確認
 
@@ -95,10 +97,13 @@ echo off > /tmp/claude-blink-state   # 消える
 ## トラブルシュート
 
 **LED が光らない（ターミナルからの手動実行だと光るのに launchd だと光らない）**
-入力監視の権限が launchd プロセスに効いていません。macOS の TCC は「入力監視」を実行バイナリごとに管理し、ターミナルの子プロセスと launchd 常駐プロセスは別扱いです。`~/.capslock-blink/capsled` を入力監視に追加してチェックをオンにし、`launchctl kickstart -k gui/$(id -u)/dev.capslock-blink.led` で入れ直してください。旧来の `launchctl load` ではなく **`launchctl bootstrap gui/$(id -u)`** で登録するのも、TCC のドメインを合わせるうえで重要です（install-mac.sh はこれを使っています）。
+入力監視の権限が launchd プロセスに効いていません。macOS の TCC は「入力監視」を実行バイナリごとに管理し、ターミナルの子プロセスと launchd 常駐プロセスは別扱いです。入力監視リストの `capsled` をオン（無ければ `＋` で `~/.capslock-blink/capsled.app` を追加）にし、`launchctl kickstart -k gui/$(id -u)/dev.capslock-blink.led` で入れ直してください。旧来の `launchctl load` ではなく **`launchctl bootstrap gui/$(id -u)`** で登録するのも、TCC のドメインを合わせるうえで重要です（install-mac.sh はこれを使っています）。
 
 **ずっと点滅しっぱなし / 消えない**
 `cat /tmp/claude-blink-state` と母艦側の `ls ~/.claude/blink-flag` を突き合わせます。SSH が切れていると poll が更新できません → `tail /tmp/capsled-poll.err.log`。
+
+**許可の状態をやり直したい**
+`tccutil reset ListenEvent dev.capslock-blink.capsled` で capsled の入力監視の記録だけをリセットできます（.app バンドル化により identifier 指定が効きます）。リセット後に kickstart するとダイアログが再表示されます。
 
 **常駐確認・再起動**
 
@@ -127,7 +132,7 @@ launchctl bootout gui/$(id -u)/dev.capslock-blink.poll
 
 ## 調整
 
-- 点滅の速さ: `src/capsled.swift` の `0.4`（秒）を変更して `swiftc` で再ビルド。
+- 点滅の速さ: `src/capsled.swift` の `0.4`（秒）を変更して `bash install-mac.sh` を再実行。
 - 監視間隔: `~/.capslock-blink/config` の `INTERVAL`。
 
 ## ライセンス

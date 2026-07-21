@@ -16,11 +16,30 @@ if [ ! -f "$DIR/config" ]; then
     echo "⚠  $DIR/config を作成しました。MOTHERSHIP を自分の母艦に書き換えてから続けてください。"
 fi
 
-echo "swiftc でコンパイル中..."
-swiftc "$DIR/capsled.swift" -o "$DIR/capsled"
+# 素の CLI バイナリだと TCC（入力監視）が許可ダイアログを出してもリストに登録できないため、
+# Info.plist 付きの最小 .app バンドルとしてビルドする
+APP="$DIR/capsled.app"
+mkdir -p "$APP/Contents/MacOS"
+cat > "$APP/Contents/Info.plist" <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key><string>dev.capslock-blink.capsled</string>
+  <key>CFBundleName</key><string>capsled</string>
+  <key>CFBundleExecutable</key><string>capsled</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleVersion</key><string>1.0</string>
+  <key>CFBundleShortVersionString</key><string>1.0</string>
+  <key>LSUIElement</key><true/>
+</dict>
+</plist>
+PLIST
 
-# 固定 identifier で ad-hoc 署名（TCC がバイナリを識別しやすくするため）
-codesign --force --sign - --identifier dev.capslock-blink.capsled "$DIR/capsled" 2>/dev/null || true
+echo "swiftc でコンパイル中..."
+swiftc "$DIR/capsled.swift" -o "$APP/Contents/MacOS/capsled"
+codesign --force --sign - "$APP"
+rm -f "$DIR/capsled"   # 旧形式の素のバイナリが残っていたら片付ける
 
 # plist を配置（__DIR__ を実パスに置換）
 for name in led poll; do
@@ -36,9 +55,9 @@ done
 
 echo ""
 echo "=== 完了 ==="
-echo "最後に手動で1つだけ:"
-echo "  システム設定 → プライバシーとセキュリティ → 入力監視 に"
-echo "  $DIR/capsled を追加してチェックをオンにしてください。"
-echo "  （追加後） launchctl kickstart -k gui/$UID_NUM/dev.capslock-blink.led"
+echo "まもなく『\"capsled\" で任意のアプリケーションからキー操作を受け取ろうとしています』の"
+echo "ダイアログが出ます。「\"システム設定\"を開く」→ 入力監視リストの capsled をオンにして、"
+echo "  launchctl kickstart -k gui/$UID_NUM/dev.capslock-blink.led"
+echo "で反映してください。ダイアログを見逃したら上の kickstart でもう一度出せます。"
 echo ""
 launchctl list | grep capslock-blink || true
