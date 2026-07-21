@@ -13,7 +13,8 @@ chmod +x "$DIR/poll.sh"
 # 設定ファイルが無ければ雛形をコピー
 if [ ! -f "$DIR/config" ]; then
     cp "$SRC/config.example" "$DIR/config"
-    echo "⚠  $DIR/config を作成しました。MOTHERSHIP を自分の母艦に書き換えてから続けてください。"
+    echo "⚠  $DIR/config を作成しました。デフォルトはローカルモード（同じ Mac で Claude Code を動かす構成）です。"
+    echo "   別マシンで動かす場合は MOTHERSHIP を user@host に書き換えてください。"
 fi
 
 # 素の CLI バイナリだと TCC（入力監視）が許可ダイアログを出してもリストに登録できないため、

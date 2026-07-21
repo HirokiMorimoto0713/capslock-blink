@@ -1,10 +1,12 @@
 # capslock-blink 設定ファイル
 # ~/.capslock-blink/config にコピーして自分の環境に合わせて書き換える。
 
-# 母艦（Claude Code が動くマシン）への SSH 先。鍵認証で入れること。
-MOTHERSHIP="user@100.x.x.x"
+# Claude Code が同じ Mac 上で動くならこのまま "local" でOK（SSH不要）。
+# 別マシン（母艦）で動かす場合は "user@host" を書く（鍵認証で入れること）。
+MOTHERSHIP="local"
 
-# 母艦側でフラグファイルが作られるパス（通常このままでOK）。
+# flag ファイルが作られるパス（通常このままでOK）。
+# ローカルモードではこの Mac 上のパス、リモートモードでは母艦側のパスとして扱われる。
 FLAG_PATH="~/.claude/blink-flag"
 
 # Mac ローカルの状態ファイル（capsled と共有。通常このままでOK）。
