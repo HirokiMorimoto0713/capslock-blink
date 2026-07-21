@@ -19,6 +19,9 @@ fi
 echo "swiftc でコンパイル中..."
 swiftc "$DIR/capsled.swift" -o "$DIR/capsled"
 
+# 固定 identifier で ad-hoc 署名（TCC がバイナリを識別しやすくするため）
+codesign --force --sign - --identifier dev.capslock-blink.capsled "$DIR/capsled" 2>/dev/null || true
+
 # plist を配置（__DIR__ を実パスに置換）
 for name in led poll; do
     sed "s|__DIR__|$DIR|g" "$SRC/launchagents/dev.capslock-blink.$name.plist" \

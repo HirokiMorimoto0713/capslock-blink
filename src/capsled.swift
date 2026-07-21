@@ -11,7 +11,22 @@ let devMatch: [String: Any] = [
     kIOHIDDeviceUsageKey as String: kHIDUsage_GD_Keyboard
 ]
 IOHIDManagerSetDeviceMatching(manager, devMatch as CFDictionary)
-IOHIDManagerOpen(manager, IOOptionBits(kIOHIDOptionsTypeNone))
+
+func logErr(_ msg: String) {
+    FileHandle.standardError.write((msg + "\n").data(using: .utf8)!)
+}
+
+// 入力監視（TCC）が未許可だと HID を開けない。CLI バイナリは設定画面の「＋」から
+// 追加しても登録されないことがあるため、自分から要求して OS の許可ダイアログを出させる。
+if IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) != kIOHIDAccessTypeGranted {
+    logErr("入力監視が未許可のため OS に許可を要求します（ダイアログが出たら許可してください）")
+    IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+}
+
+let openResult = IOHIDManagerOpen(manager, IOOptionBits(kIOHIDOptionsTypeNone))
+if openResult != kIOReturnSuccess {
+    logErr("IOHIDManagerOpen 失敗: 0x\(String(openResult, radix: 16))。入力監視の許可を確認してください")
+}
 
 let ledMatch: [String: Any] = [
     kIOHIDElementUsagePageKey as String: kHIDPage_LEDs,

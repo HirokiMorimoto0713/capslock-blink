@@ -72,12 +72,13 @@ $EDITOR ~/.capslock-blink/config     # MOTHERSHIP="user@host" を自分の環境
 bash install-mac.sh
 ```
 
-インストールが終わったら、**手動で 1 つだけ**権限を付けます（後述の「入力監視」の理由を参照）。
+インストールが終わって capsled が起動すると、macOS が「"capsled" がキーボード入力の監視を求めています」という**入力監視の許可ダイアログ**を出すので、許可してください。許可すると システム設定 → プライバシーとセキュリティ → 入力監視 に capsled が自動で登録されます（CLI バイナリは「＋」から手動追加しても登録されないことがあるため、capsled 自身が `IOHIDRequestAccess` で要求してダイアログを出させる方式にしています）。
 
-1. システム設定 → プライバシーとセキュリティ → **入力監視**
-2. `＋` を押し、`~/.capslock-blink/capsled` を追加してチェックをオン
-   （隠しフォルダが見えない時は選択ダイアログで `Cmd+Shift+.`）
-3. 反映: `launchctl kickstart -k gui/$(id -u)/dev.capslock-blink.led`
+ダイアログを見逃した・許可し損ねたときは:
+
+1. システム設定 → 入力監視 に `capsled` が現れていればチェックをオン
+2. 反映: `launchctl kickstart -k gui/$(id -u)/dev.capslock-blink.led`
+   （kickstart するとダイアログがもう一度出ます）
 
 ## 動作確認
 
